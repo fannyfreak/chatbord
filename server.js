@@ -26,22 +26,37 @@ const fetchSheetData = async () => {
     }
 
     const data = JSON.parse(jsonMatch[1])
+    const cols = data.table.cols
     const rows = data.table.rows
 
-    if (rows.length === 0) return []
+    if (!rows || rows.length === 0) return []
 
-    const headers = rows[0].c.map(cell => cell ? (cell.v || '') : '')
+    // 列ラベルを取得（colsから、なければ1行目から）
+    let headers = cols.map(col => col.label || '')
+    let dataRows = rows
 
-    const records = rows.slice(1).map(row => {
+    // colsにラベルがない場合、1行目をヘッダーとして使用
+    if (headers.every(h => !h) && rows.length > 0 && rows[0].c) {
+      headers = rows[0].c.map(cell => cell ? (cell.v || '') : '')
+      dataRows = rows.slice(1)
+    }
+
+    console.log('Headers:', headers)
+
+    const records = dataRows.map(row => {
       const record = {}
-      row.c.forEach((cell, idx) => {
-        const header = headers[idx]
-        if (header) {
-          record[header] = cell ? (cell.v || '') : ''
-        }
-      })
+      if (row.c) {
+        row.c.forEach((cell, idx) => {
+          const header = headers[idx]
+          if (header) {
+            record[header] = cell ? (cell.v || '') : ''
+          }
+        })
+      }
       return record
     }).filter(r => r['来客者名'])
+
+    console.log('Records found:', records.length)
 
     return records
   } catch (error) {
@@ -54,16 +69,20 @@ const fetchSheetData = async () => {
 app.get('/api/reservation', async (req, res) => {
   const { name } = req.query
 
+  console.log('Search request for:', name)
+
   if (!name) {
     return res.status(400).json({ error: 'name is required' })
   }
 
   try {
     const records = await fetchSheetData()
+    console.log('All records:', JSON.stringify(records, null, 2))
 
-    const found = records.find(r =>
-      r['来客者名'] && r['来客者名'].includes(name)
-    )
+    const found = records.find(r => {
+      console.log('Checking:', r['来客者名'], 'against:', name)
+      return r['来客者名'] && r['来客者名'].includes(name)
+    })
 
     if (found) {
       res.json({
