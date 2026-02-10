@@ -128,10 +128,10 @@ function App() {
     } catch (error) {
       console.error('Search error:', error)
       setScreen('result')
-      setMessage('システムエラーが発生しました。\n\n恐れ入りますが、下記の番号にお電話ください。\n\n📞 03-1234-5678')
+      setMessage('ご予約が確認できません。\n\n恐れ入りますが、下記の番号にお電話ください。\n\n📞 03-1234-5678')
       setCurrentClip('warning')
       setResultData({ type: 'error' })
-      speakText('システムエラーが発生しました。恐れ入りますが、お電話にてお問い合わせください。')
+      speakText('ご予約が確認できません。恐れ入りますが、お電話にてお問い合わせください。')
     } finally {
       setIsLoading(false)
     }
